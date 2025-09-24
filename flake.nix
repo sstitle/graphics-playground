@@ -28,12 +28,16 @@
         }:
         let
           treefmtEval = inputs.treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+          bx-source = pkgs.callPackage ./nix/derivations/sources/bx.nix { };
+          bimg-source = pkgs.callPackage ./nix/derivations/sources/bimg.nix { };
+          bgfx-source = pkgs.callPackage ./nix/derivations/sources/bgfx.nix { };
+          bgfx = pkgs.callPackage ./nix/derivations/bgfx.nix {
+            inherit bx-source bimg-source bgfx-source;
+          };
         in
         {
-          # Development shell with nickel and mask
           devShells.default = pkgs.mkShell {
             buildInputs = with pkgs; [
-              # Core tools
               git
               nickel
               mask
@@ -50,10 +54,17 @@
             '';
           };
 
-          # for `nix fmt`
+          packages = {
+            inherit
+              bx-source
+              bimg-source
+              bgfx-source
+              bgfx
+              ;
+          };
+
           formatter = treefmtEval.config.build.wrapper;
 
-          # for `nix flake check`
           checks = {
             formatting = treefmtEval.config.build.check self;
           };
